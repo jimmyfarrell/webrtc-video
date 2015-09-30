@@ -29,6 +29,7 @@
     "lodash": "^3.9.3",
     "morgan": "^1.5.2",
     "nodemon": "^1.3.7",
+    "peerjs": "^0.3.14",
     "run-sequence": "^1.1.0"
   },
   "devDependencies": {
