@@ -1,6 +1,5 @@
 // Transpile ES6 to ES5
 require('babel/register');
-require('./db.js');
 
 var chalk = require('chalk');
 var Promise = require('bluebird');

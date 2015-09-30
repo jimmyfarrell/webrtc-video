@@ -1,30 +1,35 @@
-app.controller('HomeController', function($scope, $http, $sce) {
-
-    navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia;
-
-    navigator.getUserMedia({ audio: true, video: true }, function(stream) {
-        myStream = stream;
-    }, function(err) {
-        console.log('There was an error. Surprise surprise.');
-    });
+app.controller('HomeController', function($scope, $http, $sce, User) {
 
     var myStream;
-
     $scope.callId = '';
     $scope.myId = '';
     $scope.video = '';
+    $scope.user = '';
 
-    var peer = new Peer({key: 's5lw9do7zht1emi'});
+    $scope.connect = function(name){
+        var peer = new Peer({key: 's5lw9do7zht1emi'});
+        navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia;
 
-    peer.on('open', function(id) {
-        $scope.myId = id;
-        $scope.$digest();
-    });
+        navigator.getUserMedia({ audio: true, video: true }, function(stream) {
+            myStream = stream;
+        }, function(err) {
+            console.log('There was an error. Surprise surprise.');
+        });
 
-    peer.on('call', function(call) {
-        call.answer(myStream)
-        showVideo(call);
-    });
+        peer.on('open', function(id) {
+            User.connect(id, $scope.user)
+            .then(function(){
+                $scope.myId = id;
+            })
+            .catch(console.log);
+        });
+
+        peer.on('call', function(call) {
+            call.answer(myStream);
+            showVideo(call);
+        });
+    };
+
 
     $scope.makeCall = function(callId) {
         var call = peer.call(callId, myStream);

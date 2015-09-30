@@ -5,6 +5,13 @@ var logger = require('morgan');
 var chalk = require('chalk');
 var bodyParser = require('body-parser');
 
+import redis from 'redis';
+import bluebird from 'bluebird';
+
+bluebird.promisifyAll(redis.RedisClient.prototype);
+bluebird.promisifyAll(redis.Multi.prototype);
+let client = redis.createClient();
+
 var clientPath = path.join(__dirname, '../client');
 var buildPath = path.join(__dirname, '../client/build');    // for gulped files
 var indexHtmlPath = path.join(__dirname, './index.html');
@@ -41,11 +48,29 @@ app.use(function (req, res, next) {
 
 });
 
+app.post('/connect', function(req, res, next){
+  client.hsetAsync('webRTC', req.body.id, req.body.user)
+  .then(function(resp){
+    res.sendStatus(201);
+  })
+  .catch(next);
+});
+
+app.get('/peers', function(req, res, next){
+  client.hgetallAsync('webRTC')
+  .then(function(users){
+      res.json(users);
+  })
+  .catch(next);
+});
+
+
 // Routes
 //// Index/Home
 app.use('/', function(req, res, next) {
   res.sendFile(path.join(__dirname, './index.html'));
 });
+
 
 
 // Errors
