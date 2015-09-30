@@ -6,8 +6,11 @@ app.controller('HomeController', function($scope, $http, $sce, User) {
     $scope.video = '';
     $scope.user = '';
 
+    var peer;
+
     $scope.connect = function(name){
-        var peer = new Peer({key: 's5lw9do7zht1emi'});
+        peer = new Peer({key: 's5lw9do7zht1emi'});
+
         navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia;
 
         navigator.getUserMedia({ audio: true, video: true }, function(stream) {
@@ -32,8 +35,11 @@ app.controller('HomeController', function($scope, $http, $sce, User) {
 
 
     $scope.makeCall = function(callId) {
-        var call = peer.call(callId, myStream);
-        showVideo(call);
+        User.getOne($scope.myId)
+        .then(function(randoId){
+            var call = peer.call(randoId, myStream);
+            showVideo(call);
+        });
     };
 
     var showVideo = function(call) {
