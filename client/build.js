@@ -7,7 +7,7 @@ class ConnectForm extends React.Component {
                 <input id="user" ref="user" type="text" />
                 <input type="submit" value="Connect"/>
             </form>
-        )
+        );
     }
 
     connect(e) {
@@ -19,20 +19,42 @@ class ConnectForm extends React.Component {
 
 class Video extends React.Component {
     constructor(){
-        this.state = {video: null, call: this.props.call};
+        this.state = {video: null, call: null};
     }
+
+    showVideo(stream) {
+        let video = URL.createObjectURL(stream);
+        this.setState({video});
+    }
+
     render(){
-        if(this.state.call) {
+        let peer = this.props.peer;
+
+        peer.on('call', call => {
+            navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia;
+
+            navigator.getUserMedia(
+                { audio: true, video: true },
+                stream => {
+                    call.answer(stream);
+                    this.setState({call});
+                },
+                err => {
+                    console.log('There was an error. Surprise surprise.');
+                }
+            );
+        });
+
+        if (this.state.call) {
             this.state.call.on('stream', stream => {
-                let video = URL.createObjectURL(stream);
-                this.setState({video});
+                this.showVideo(stream);
             });
         }
 
         return (
             <div>
-                {this.props.call ? (
-                    <video src={this.state.video} autoplay></video>
+                {this.state.call ? (
+                    <video src={this.state.video} autoPlay></video>
                 ) :
                 <form onSubmit={this.callPeer.bind(this)}>
                     <input type="text" ref="peerId"/>
@@ -40,19 +62,24 @@ class Video extends React.Component {
                 </form>
                 }
             </div>
-        )
+        );
     }
 
     callPeer(e) {
         e.preventDefault();
         let peerId = React.findDOMNode(this.refs.peerId).value;
-        let call = this.props.callPeer(peerId);
+        navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia;
 
-        call.on('stream', stream => {
-            console.log('Video component call on stream');
-            let video = URL.createObjectURL(stream);
-            this.setState({video});
-        })
+        navigator.getUserMedia(
+            { audio: true, video: true },
+            stream => {
+                let call = this.props.peer.call(peerId, stream);
+                this.setState({call});
+            },
+            err => {
+                console.log('There was an error. Surprise surprise.');
+            }
+        );
     }
 
 }
@@ -60,22 +87,13 @@ class Video extends React.Component {
 
 class VideoChat extends React.Component {
     constructor() {
-        this.state = {myId: '', peer: null, call: null, myStream: null}
+        this.state = {myId: '', peer: null}
     }
 
     onConnect(user) {
 
-        let myStream;
         let peer =  new Peer({key: 's5lw9do7zht1emi'});
         this.setState({peer});
-
-        navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia;
-
-        navigator.getUserMedia({ audio: true, video: true }, stream => {
-            this.setState({myStream: stream});
-        }, err => {
-            console.log('There was an error. Surprise surprise.');
-        });
 
         peer.on('open', id => {
             this.setState({ myId: id });
@@ -89,36 +107,21 @@ class VideoChat extends React.Component {
             });
         });
 
-        peer.on('call', call => {
-            console.log('peer.on call', this.state.myStream);
-            call.answer(this.state.myStream);
-            this.setState({call});
-        })
-
-    }
-
-    makeCall(peerId){
-        console.log('makeCall this.state.myStream', this.state.myStream);
-        let call = this.state.peer.call(peerId, this.state.myStream);
-        this.setState({call});
-        return call;
     }
 
     render() {
-
         return (
             <div>
                 {this.state.myId ? (
                     <div>
                         <h1>{this.state.myId}</h1>
-                        <Video callPeer= {this.makeCall.bind(this)} call={this.state.call} />
+                        <Video peer={this.state.peer} />
                     </div>
                 ) :
                     <ConnectForm onConnect={this.onConnect.bind(this)}/>
                 }
             </div>
-        )
-
+        );
     }
 }
 
