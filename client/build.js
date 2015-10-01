@@ -19,13 +19,15 @@ class ConnectForm extends React.Component {
 
 class Video extends React.Component {
     constructor(){
-        this.state = {video: null};
+        this.state = {video: null, call: this.props.call};
     }
     render(){
-        this.props.call.on('stream', stream => {
-            let video = URL.createObjectURL(stream);
-            this.setState({video});
-        });
+        if(this.state.call) {
+            this.state.call.on('stream', stream => {
+                let video = URL.createObjectURL(stream);
+                this.setState({video});
+            });
+        }
 
         return (
             <div>
